@@ -37,8 +37,8 @@ class LogicSymbolGenerator:
     
     def generate_novel_symbol(self) -> str:
         methods = [
-            lambda: self.combine_symbols(4),
-            lambda: self.combine_symbols(6),
+            lambda: self.combine_symbols(2),
+            lambda: self.combine_symbols(3),
             lambda: self.get_random_base() + random.choice(self.decorators),
             lambda: self.get_random_base() + random.choice(self.positions),
         ]
@@ -58,7 +58,7 @@ class LogicSymbolGenerator:
             if len(symbol) > 4:
                 return False
             for char in symbol:
-                if unicodedata.category(char) not in {'So', 'Sm', 'Mn', 'Me', 'Pd', 'Lu'}:  # Added 'Lu' for uppercase letters
+                if unicodedata.category(char) not in {'So', 'Sm', 'Mn', 'Me', 'Pd', 'Lu'}:
                     return False
             return True
         except UnicodeError:
@@ -82,12 +82,20 @@ class SymbolGeneratorGUI:
         control_frame = ttk.Frame(self.root)
         control_frame.pack(fill='x', pady=(0, 20))
         
-        # Amount entry and generate button
+        # Amount entry
         ttk.Label(control_frame, text="Batch Size:").pack(side='left', padx=(0, 10))
         self.amount_var = tk.StringVar(value="10")
         amount_entry = ttk.Entry(control_frame, textvariable=self.amount_var, width=10)
         amount_entry.pack(side='left', padx=(0, 10))
         
+        # Size selector
+        ttk.Label(control_frame, text="Symbol Size:").pack(side='left', padx=(10, 10))
+        self.size_var = tk.StringVar(value="14")
+        sizes = ["8", "10", "12", "14", "16", "18", "20", "24", "28", "32", "36", "40"]
+        size_combo = ttk.Combobox(control_frame, textvariable=self.size_var, values=sizes, width=5)
+        size_combo.pack(side='left', padx=(0, 10))
+        
+        # Generate button
         ttk.Button(control_frame, text="Generate Symbols", command=self.generate_symbols).pack(side='left')
         
         # Create notebook for different views
@@ -98,16 +106,24 @@ class SymbolGeneratorGUI:
         symbols_frame = ttk.Frame(self.notebook)
         self.notebook.add(symbols_frame, text="Generated Symbols")
         
-        self.symbols_text = scrolledtext.ScrolledText(symbols_frame, wrap=tk.WORD, font=('TkDefaultFont', 14))
+        self.symbols_text = scrolledtext.ScrolledText(symbols_frame, wrap=tk.WORD)
         self.symbols_text.pack(expand=True, fill='both')
         
         # Categories tab
         categories_frame = ttk.Frame(self.notebook)
         self.notebook.add(categories_frame, text="Available Symbols")
         
-        self.categories_text = scrolledtext.ScrolledText(categories_frame, wrap=tk.WORD, font=('TkDefaultFont', 12))
+        self.categories_text = scrolledtext.ScrolledText(categories_frame, wrap=tk.WORD)
         self.categories_text.pack(expand=True, fill='both')
+        
+        # Initialize displays with default font size
+        self.update_font_size()
         self.update_categories_display()
+        
+    def update_font_size(self):
+        size = int(self.size_var.get())
+        self.symbols_text.configure(font=('TkDefaultFont', size))
+        self.categories_text.configure(font=('TkDefaultFont', size))
         
     def generate_symbols(self):
         try:
@@ -118,6 +134,9 @@ class SymbolGeneratorGUI:
             self.symbols_text.delete(1.0, tk.END)
             self.symbols_text.insert(tk.END, "Please enter a valid positive number")
             return
+        
+        # Update font size before generating new symbols
+        self.update_font_size()
         
         symbols = self.generator.generate_batch(amount)
         
